@@ -101,11 +101,14 @@ module FibrazoRetiroEquipos
       [DEFAULT_TRIGGER_SUBCATEGORIA]
     end
 
-    # Trackers donde opera el dominio, por nombre (robusto ante ids).
+    # Trackers del dominio: se derivan del destino (un solo tracker por
+    # configuración; el admin elige el destino en lista y los motivos aparte).
     def enabled_tracker_ids
-      names = list_setting('tracker_names', [DEST_TRACKER_NAME])
-      ids = names.filter_map { |name| Tracker.find_by(name: name)&.id }
-      ids.presence || Array(Tracker.find_by(name: DEST_TRACKER_NAME)&.id).compact
+      ids = Array(Tracker.find_by(name: switch_tracker_name.to_s.strip)&.id).compact
+      return ids if ids.any?
+
+      legacy = list_setting('tracker_names', [])
+      legacy.filter_map { |name| Tracker.find_by(name: name)&.id }
     rescue StandardError
       []
     end

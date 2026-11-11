@@ -1,8 +1,6 @@
 <% helper = FibrazoRetiroEquipos::SettingsHelper %>
 <% all_trackers = Tracker.order(:name).pluck(:name) %>
 <% current_dest = helper.switch_tracker_name %>
-<% current_ids = helper.enabled_tracker_ids %>
-<% current_names = Tracker.where(id: current_ids).pluck(:name) %>
 <% current_sub = helper.trigger_subcategoria %>
 <% sub_opts = (helper.trigger_subcategoria_opciones + [current_sub]).compact.uniq %>
 <% motivos = helper.trigger_opciones_detalle %>
@@ -19,13 +17,6 @@
     <%= select_tag 'settings[switch_tracker_name]',
           options_for_select(all_trackers, current_dest) %>
     <em class="info">Aquí se crea el caso (por defecto: Retiro de ONU/TV Box).</em>
-  </p>
-  <p>
-    <label for="settings_tracker_names">Trackers del dominio</label>
-    <%= select_tag 'settings[tracker_names][]',
-          options_for_select(all_trackers, current_names),
-          multiple: true, size: [all_trackers.size, 8].min, id: 'settings_tracker_names' %>
-    <em class="info">Ctrl+clic para varios. Deben incluir el destino.</em>
   </p>
   <p>
     <label for="settings_trigger_subcategoria">Subcategoría</label>
