@@ -1,0 +1,42 @@
+<% helper = FibrazoRetiroEquipos::SettingsHelper %>
+<% dest_trackers = Tracker.order(:name).pluck(:name) %>
+<% current_dest = helper.switch_tracker_name %>
+<% current_sub = helper.trigger_subcategoria %>
+<% sub_opts = (helper.trigger_subcategoria_opciones + [current_sub]).compact.uniq %>
+<% motivos_opts = helper.trigger_opciones %>
+<% motivos_sel = helper.trigger_motivos %>
+<fieldset class="box tabular">
+  <legend>Retiro de equipos: cambio automático de tracker</legend>
+  <p>
+    <%= check_box_tag 'settings[enabled]', '1', helper.enabled? %>
+    <label for="settings_enabled">Activado (al tipificar un motivo de retiro en un caso nuevo, el tracker cambia al destino)</label>
+  </p>
+  <p>
+    <label for="settings_switch_tracker_name">Tracker destino</label>
+    <%= select_tag 'settings[switch_tracker_name]',
+          options_for_select(dest_trackers, current_dest) %>
+    <em class="info">Se crea el caso en este tracker (por defecto: Retiro de ONU/TV Box).</em>
+  </p>
+  <p>
+    <label for="settings_tracker_names">Trackers del dominio (uno por línea)</label>
+    <%= text_area_tag 'settings[tracker_names]', helper.list_setting('tracker_names', [current_dest]).join("\n"),
+          rows: 3, cols: 40 %>
+  </p>
+  <p>
+    <label for="settings_trigger_subcategoria">Subcategoría disparadora</label>
+    <%= select_tag 'settings[trigger_subcategoria]',
+          options_for_select(sub_opts, current_sub) %>
+  </p>
+  <div>
+    <label>Motivos que disparan el cambio</label>
+    <%= hidden_field_tag 'settings[trigger_motivos][]', '' %>
+    <% motivos_opts.each do |motivo| %>
+      <p style="margin:2px 0 2px 20px">
+        <%= check_box_tag 'settings[trigger_motivos][]', motivo, motivos_sel.include?(motivo),
+              id: "retiro_motivo_#{motivo.parameterize}" %>
+        <label for="retiro_motivo_<%= motivo.parameterize %>"><%= h motivo %></label>
+      </p>
+    <% end %>
+    <em class="info">Solo motivos del catálogo con subcategoría de retiro. Vacío = ningún cambio.</em>
+  </div>
+</fieldset>
