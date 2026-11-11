@@ -24,16 +24,18 @@
           options_for_select(sub_opts, current_sub) %>
     <em class="info">Disparadora adicional (cubre variantes por equipo).</em>
   </p>
-  <div>
-    <label>Motivos que disparan</label>
+</fieldset>
+<fieldset class="box">
+  <legend>Motivos que disparan</legend>
+  <div class="retiro-motivos-list">
     <%= hidden_field_tag 'settings[trigger_motivos][]', '' %>
     <% motivos.each do |m| %>
-      <p style="margin:2px 0 2px 20px">
+      <label for="retiro_motivo_<%= m[:reason].parameterize %>" style="display:block;margin:2px 0">
         <%= check_box_tag 'settings[trigger_motivos][]', m[:reason], motivos_sel.include?(m[:reason]),
               id: "retiro_motivo_#{m[:reason].parameterize}" %>
-        <label for="retiro_motivo_<%= m[:reason].parameterize %>"><strong><%= h m[:reason] %></strong><% if m[:contextos].any? %> <span style="color:#64748b;font-weight:normal">(<%= h m[:contextos].join(' | ') %>)</span><% end %></label>
-      </p>
+        <strong><%= h m[:reason] %></strong><% if m[:contextos].any? %> <span style="color:#64748b;font-weight:normal">(<%= h m[:contextos].join(' | ') %>)</span><% end %>
+      </label>
     <% end %>
-    <em class="info">Solo estos motivos cambian el tracker. Vacío = ningún cambio.</em>
   </div>
+  <em class="info">Solo estos motivos cambian el tracker. Vacío = ningún cambio.</em>
 </fieldset>
