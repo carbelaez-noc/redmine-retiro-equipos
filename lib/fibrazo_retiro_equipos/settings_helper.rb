@@ -64,18 +64,29 @@ module FibrazoRetiroEquipos
       settings['trigger_subcategoria'].presence || DEFAULT_TRIGGER_SUBCATEGORIA
     end
 
-    # Motivos seleccionables en el admin: razones de apertura vivas del
-    # catálogo cuya subcategoría menciona retiro (cubre normal y AX).
+    # Motivos seleccionables en el admin: razones de apertura vivas que
+    # mencionen retiro en razón o subcategoría (cubre equipos normal y AX,
+    # más la solicitud de retiro de PQRS para decisión del admin).
     def trigger_opciones
+      trigger_opciones_detalle.map { |h| h[:reason] }
+    end
+
+    def trigger_opciones_detalle
       if defined?(IssueReasonCatalogEntry)
-        reasons = IssueReasonCatalogEntry.active.where(kind: 'opening')
-                                              .where('subcategory ILIKE ?', '%retiro%')
-                                              .distinct.order(:reason).pluck(:reason)
-        return reasons.map(&:to_s) if reasons.any?
+        rows = IssueReasonCatalogEntry.active.where(kind: 'opening')
+          .where('reason ILIKE :q OR subcategory ILIKE :q', q: '%retiro%')
+          .order(:reason).pluck(:reason, :team, :category)
+        grouped = {}
+        rows.each do |reason, team, cat|
+          grouped[reason.to_s] ||= []
+          ctx = [team.to_s, cat.to_s].reject(&:blank?).join(' · ')
+          grouped[reason.to_s] << ctx unless ctx.empty? || grouped[reason.to_s].include?(ctx)
+        end
+        return grouped.map { |reason, ctxs| { reason: reason, contextos: ctxs } } if grouped.any?
       end
-      DEFAULT_TRIGGER_MOTIVOS.dup
+      DEFAULT_TRIGGER_MOTIVOS.map { |r| { reason: r, contextos: [] } }
     rescue StandardError
-      DEFAULT_TRIGGER_MOTIVOS.dup
+      DEFAULT_TRIGGER_MOTIVOS.map { |r| { reason: r, contextos: [] } }
     end
 
     def trigger_subcategoria_opciones

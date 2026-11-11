@@ -1,42 +1,48 @@
 <% helper = FibrazoRetiroEquipos::SettingsHelper %>
-<% dest_trackers = Tracker.order(:name).pluck(:name) %>
+<% all_trackers = Tracker.order(:name).pluck(:name) %>
 <% current_dest = helper.switch_tracker_name %>
+<% current_ids = helper.enabled_tracker_ids %>
+<% current_names = Tracker.where(id: current_ids).pluck(:name) %>
 <% current_sub = helper.trigger_subcategoria %>
 <% sub_opts = (helper.trigger_subcategoria_opciones + [current_sub]).compact.uniq %>
-<% motivos_opts = helper.trigger_opciones %>
+<% motivos = helper.trigger_opciones_detalle %>
 <% motivos_sel = helper.trigger_motivos %>
 <fieldset class="box tabular">
   <legend>Retiro de equipos: cambio automático de tracker</legend>
   <p>
-    <%= check_box_tag 'settings[enabled]', '1', helper.enabled? %>
-    <label for="settings_enabled">Activado (al tipificar un motivo de retiro en un caso nuevo, el tracker cambia al destino)</label>
+    <label for="settings_enabled">Activado</label>
+    <%= check_box_tag 'settings[enabled]', '1', helper.enabled?, id: 'settings_enabled' %>
+    <em class="info">Al tipificar un motivo de retiro en un caso nuevo, el tracker cambia al destino.</em>
   </p>
   <p>
     <label for="settings_switch_tracker_name">Tracker destino</label>
     <%= select_tag 'settings[switch_tracker_name]',
-          options_for_select(dest_trackers, current_dest) %>
-    <em class="info">Se crea el caso en este tracker (por defecto: Retiro de ONU/TV Box).</em>
+          options_for_select(all_trackers, current_dest) %>
+    <em class="info">Aquí se crea el caso (por defecto: Retiro de ONU/TV Box).</em>
   </p>
   <p>
-    <label for="settings_tracker_names">Trackers del dominio (uno por línea)</label>
-    <%= text_area_tag 'settings[tracker_names]', helper.list_setting('tracker_names', [current_dest]).join("\n"),
-          rows: 3, cols: 40 %>
+    <label for="settings_tracker_names">Trackers del dominio</label>
+    <%= select_tag 'settings[tracker_names][]',
+          options_for_select(all_trackers, current_names),
+          multiple: true, size: [all_trackers.size, 8].min, id: 'settings_tracker_names' %>
+    <em class="info">Ctrl+clic para varios. Deben incluir el destino.</em>
   </p>
   <p>
-    <label for="settings_trigger_subcategoria">Subcategoría disparadora</label>
+    <label for="settings_trigger_subcategoria">Subcategoría</label>
     <%= select_tag 'settings[trigger_subcategoria]',
           options_for_select(sub_opts, current_sub) %>
+    <em class="info">Disparadora adicional (cubre variantes por equipo).</em>
   </p>
   <div>
-    <label>Motivos que disparan el cambio</label>
+    <label>Motivos que disparan</label>
     <%= hidden_field_tag 'settings[trigger_motivos][]', '' %>
-    <% motivos_opts.each do |motivo| %>
+    <% motivos.each do |m| %>
       <p style="margin:2px 0 2px 20px">
-        <%= check_box_tag 'settings[trigger_motivos][]', motivo, motivos_sel.include?(motivo),
-              id: "retiro_motivo_#{motivo.parameterize}" %>
-        <label for="retiro_motivo_<%= motivo.parameterize %>"><%= h motivo %></label>
+        <%= check_box_tag 'settings[trigger_motivos][]', m[:reason], motivos_sel.include?(m[:reason]),
+              id: "retiro_motivo_#{m[:reason].parameterize}" %>
+        <label for="retiro_motivo_<%= m[:reason].parameterize %>"><strong><%= h m[:reason] %></strong><% if m[:contextos].any? %> <span style="color:#64748b;font-weight:normal">(<%= h m[:contextos].join(' | ') %>)</span><% end %></label>
       </p>
     <% end %>
-    <em class="info">Solo motivos del catálogo con subcategoría de retiro. Vacío = ningún cambio.</em>
+    <em class="info">Solo estos motivos cambian el tracker. Vacío = ningún cambio.</em>
   </div>
 </fieldset>
